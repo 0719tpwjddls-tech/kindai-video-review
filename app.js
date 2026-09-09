@@ -82,7 +82,16 @@ function render(rows,config={},loading=false){
  const card=element('article',`episode${hasURL?'':' empty'}`);card.setAttribute('aria-labelledby',`episode-${num}`);
  const media=id?watchAction('', 'media',ep,config):element('div','media');if(id)media.setAttribute('aria-label',`${t('watch')} ${num}: ${label}`);
  const center=element('span','center-title',label);center.setAttribute('aria-hidden','true');media.append(center);
- if(id){center.hidden=true;const img=element('img');img.src=`https://i.ytimg.com/vi/${id}/hqdefault.jpg`;img.alt=label;img.loading='lazy';img.decoding='async';img.addEventListener('error',()=>{img.remove();center.hidden=false;},{once:true});media.append(img,element('span','play','▶'));}
+ if(id){
+ center.hidden=true;const img=element('img'),sizes=['maxresdefault','sddefault','hqdefault'];let sizeIndex=0;
+ img.alt=label;img.loading='lazy';img.decoding='async';
+ const nextImage=()=>{sizeIndex++;if(sizeIndex<sizes.length)img.src=`https://i.ytimg.com/vi/${id}/${sizes[sizeIndex]}.jpg`;else{img.remove();center.hidden=false;}};
+ img.addEventListener('error',nextImage);
+ // YouTube can return a small placeholder with HTTP 200 for an unavailable size.
+ img.addEventListener('load',()=>{if(img.naturalWidth<=120)nextImage();});
+ img.src=`https://i.ytimg.com/vi/${id}/${sizes[0]}.jpg`;
+ const play=element('span','play','▶');play.setAttribute('aria-hidden','true');media.append(img,play);
+ }
  const details=element('div','details'),title=element('h3','',label);title.id=`episode-${num}`;
  details.append(title,element('span','location-label',t('requested')),element('p','locations',localized(ep.requestedLocations)||t('locations')));
  const status=element('span',`status${hasURL&&!loading?' ready':''}`,t(loading?'loading':hasURL?'ready':'production'));
